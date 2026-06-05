@@ -1,98 +1,61 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Practica 3 - Voz Ciudadana
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Software para automatizar el procesamiento de iniciativas legislativas de los ciudadanos. Permite a los colectivos civiles crear propuestas normativas y recolectar firmas de apoyo de la sociedad civil.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Requisitos Funcionales
 
-## Description
+- **Propuestas:** El sistema debe permitir a los usuarios crear, editar (en caso aun no se haya enviado el formulario) y publicar iniciativas legislativas, permitiendo adjuntar elementos.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Firmas:** El sistema debe permitir a los usuarios emitir una firma digital por iniciativa.
 
-## Project setup
+- **Plazos:** El sistema debe iniciar un contador calendario con un plazo maximo de 90 dias en el momento en que se envia el formulario de la iniciativa propuesta.
 
-```bash
-$ npm install
-```
+- **Validacion:** El sistema debe monitorear el conteo de firmas y detectar automaticamente cuando alguna iniciativa alcanze las 25,000 firmas validas.
 
-## Compile and run the project
+- **Seguridad:** Al lograr las 25,000 firmas dentro del plazo, el sistema debe congelar criptograficamente el archivo.
 
-```bash
-# development
-$ npm run start
+- **Transmision:** El sistema debe enviar automaticamente el archivo congelado a la API o buzon electronico de la Oficina del Congreso.
 
-# watch mode
-$ npm run start:dev
+- **Interaccion:** El sistema debe permitir a los usuarios agregar comentarios, firmas, modificaciones y sugerencias a las propuestas en curso.
 
-# production mode
-$ npm run start:prod
-```
+## Historias de Usuario
 
-## Run tests
+- **Historia de Usuario 01:** Como ciudadano, quiero firmar digitalmente una propuestas activa, mostrando mi apoyo cuando debatan la propuesta en el congreso
 
-```bash
-# unit tests
-$ npm run test
+- **Historia de Usuario 02:** Como auditorio del Congreso, quiero recibir un archivo con verificacion criptografica para asegurar que la propuesta y las firmas no hayan sido alteradas durante su transmision.
 
-# e2e tests
-$ npm run test:e2e
+## Casos de Prueba
 
-# test coverage
-$ npm run test:cov
-```
+- **Caso de Prueba 01:**
+  - _Condicion:_ Propuesta con 21,000 firmas. El reloj del servidor marca el inicio del dia 91. Un usuario intenta firmar.
+  - _Resultado Esperado:_ El sistema rechaza la firma, muestra un mensaje de "Plazo vencido" y cambia el estado de la propuesta a "Archivado".
 
-## Deployment
+- **Caso de Prueba 01:**
+  - _Condicion:_ Un usuario intenta firmar una propuesta que ya firmo anteriormente.
+  - _Resultado Esperado:_ El sistema intercepta la peticion y muestra un error indicando que la firma ya fue registrada.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Patrones de Diseño Estructurales
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 1. Adapter
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+Este patron permite que interfaces incompatibles trabajen juntas.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+En nuestro caso, lo usamos para la validacion de firmas e identidad, ya que necesitaremos conectarnos a un servicio externo (como el servicio de verificacion de identidad de RENIEC). Si en algun momento se cambia el proveedor de identidad, solo creamos un nuevo adaptador sin tocar la logica.
 
-## Resources
+### 2. Facade
 
-Check out a few resources that may come in handy when working with NestJS:
+Este patron provee una interfaz simplificada para un conjunto de subsistemas complejos.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+En nuestro proyeto, lo usamos para el proceso de transmision de la propuesta al congreso. Al alcanzar las 25,000 firmas ocurre lo siguiente: genera un PDF, aplica un congelamiento criptografico, arma el payload y llama a la API del congreso. La fachada se encarga de administrar las clases de criptografia y red por debajo.
 
-## Support
+### 3. Proxy
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Este patron controla el acceso a un objeto mediante un sustituto.
 
-## Stay in touch
+En nuestro caso, lo usamos antes de guardar una firma en la base de datos. El proxy verifica las reglas, y si todo es valido, el proxy lo deja pasar.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 4. Decorator
 
-## License
+Este patron añade responsabilidades a un objeto dinamicamente.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+En nuestro proyecto, lo usamos para la extension dinamica de notificaciones o auditoria. Cada vez que se modifique un recurso de soporte, se guarda automaticamente un registro en una tabla de auditoria.
